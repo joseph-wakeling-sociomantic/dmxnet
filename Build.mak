@@ -12,9 +12,6 @@ endif
 download-mnist: $C/script/download-mnist
 	$(call exec,sh $(if $V,,-x) $^,$(MNIST_DATA_DIR),$^)
 
-# helper function to run tests
-run_test = $(call exec,MXNET_ENGINE_TYPE=$2 $1,$1,$2)
-
 # helper template to define targets for per-engine test runs
 define run_test_with_engine
 $(1).stamp: $(1)-$(2).stamp
