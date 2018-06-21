@@ -15,22 +15,34 @@ download-mnist: $C/script/download-mnist
 # helper function to run tests
 run_test = $(call exec,MXNET_ENGINE_TYPE=$2 $1,$1,$2)
 
+# helper template to define targets for per-engine test runs
+define run_test_with_engine
+$(1).stamp: $(1)-$(2).stamp
+
+$(1)-$(2).stamp: $1
+	$(call exec,MXNET_ENGINE_TYPE=$2 $1,$1,$2)
+endef
+
+# helper function to generate targets for per-engine test runs
+test_with_engines = $(foreach engine,$2,\
+	$(eval $(call run_test_with_engine,$1,$(engine))))
+
 # extra build dependencies for integration tests
 $O/test-mxnet: override LDFLAGS += -lz
 $O/test-mxnet: override DFLAGS += -debug=MXNetHandleManualFree
 
+# run integration tests with all specified engines
+$(eval $(call test_with_engines,$O/test-mxnet,$(TEST_MXNET_ENGINES)))
+
 # extra runtime dependencies for integration tests
 $O/test-mxnet.stamp: override ITFLAGS += $(MNIST_DATA_DIR)
-$O/test-mxnet.stamp: $O/test-mxnet download-mnist
-	$(call run_test,$<,NaiveEngine)
-	$(call run_test,$<,ThreadedEngine)
-	$(call run_test,$<,ThreadedEnginePerDevice)
-	$Vtouch $@
+$O/test-mxnet.stamp: download-mnist
+	$Vtouch $@ # override default implementation
 
 $O/%unittests: override LDFLAGS += -lz
 
-$O/allunittests.stamp: $O/allunittests
-	$(call run_test,$<,NaiveEngine)
-	$(call run_test,$<,ThreadedEngine)
-	$(call run_test,$<,ThreadedEnginePerDevice)
-	$Vtouch $@
+# run unittests with all specified engines
+$(eval $(call test_with_engines,$O/allunittests,$(TEST_MXNET_ENGINES)))
+
+$O/allunittests.stamp:
+	$Vtouch $@ # override default implementation

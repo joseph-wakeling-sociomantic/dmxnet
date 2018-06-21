@@ -1,5 +1,7 @@
 INTEGRATIONTEST := integrationtest
 
+TEST_MXNET_ENGINES ?= NaiveEngine ThreadedEngine ThreadedEnginePerDevice
+
 MXNET_ENGINE_TYPE ?= NaiveEngine
 export MXNET_ENGINE_TYPE
 
